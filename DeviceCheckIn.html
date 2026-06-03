@@ -22,6 +22,10 @@
 <div class="box">
     <h1>Device Check-In</h1>
     
+    <!-- Campo do Nome adicionado aqui -->
+    <label for="associateInput">Associate Returning Name:</label>
+    <input type="text" id="associateInput" placeholder="Enter Full Name">
+
     <label for="tcInput">TC Number to Return:</label>
     <input type="number" id="tcInput" placeholder="Ex: 45" min="1">
     
@@ -48,13 +52,17 @@
     const db = getFirestore(app);
 
     document.getElementById('checkinBtn').addEventListener('click', async () => {
+        const associateField = document.getElementById('associateInput');
         const tcField = document.getElementById('tcInput');
+        
+        const associateValue = associateField.value.trim();
         const tcValue = tcField.value.trim();
 
-        if (!tcValue) return alert("Please enter the TC number.");
+        // Valida se os dois campos foram preenchidos
+        if (!associateValue || !tcValue) return alert("Please fill in both fields.");
 
         try {
-            // Busca o registro aberto (onde checkinTime ainda é nulo) para esse TC específico
+            // Busca o registro aberto para esse TC específico
             const q = query(collection(db, "devices"), where("tcNumber", "==", parseInt(tcValue)), where("checkinTime", "==", null));
             const querySnapshot = await getDocs(q);
 
@@ -62,14 +70,16 @@
                 return alert("This device is not marked as Out or has already been returned.");
             }
 
-            // Atualiza o registro adicionando o horário de retorno
+            // Atualiza o documento salvando o horário e o nome de quem devolveu
             querySnapshot.forEach(async (documento) => {
                 const deviceRef = doc(db, "devices", documento.id);
                 await updateDoc(deviceRef, {
-                    checkinTime: serverTimestamp()
+                    checkinTime: serverTimestamp(),
+                    returnAssociate: associateValue // Novo campo salvo no banco
                 });
             });
 
+            associateField.value = "";
             tcField.value = "";
             
             const msg = document.getElementById('statusMsg');
