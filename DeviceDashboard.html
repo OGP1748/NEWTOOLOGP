@@ -17,6 +17,7 @@
         td { padding: 12px; border-bottom: 1px solid #444; font-size: 1.1rem; }
         tr:hover { background-color: #3a3a3a; }
         
+        .status-available { color: #aaa; font-style: italic; }
         .status-pending { color: #e74c3c; font-weight: bold; text-transform: uppercase; font-size: 0.9rem; background: rgba(231,76,60,0.15); padding: 5px 10px; border-radius: 4px; display: inline-block; }
         .status-returned { color: #2ecc71; font-weight: bold; font-size: 1rem; }
         
@@ -26,23 +27,21 @@
 </head>
 <body>
 <header>
-    <h1><span class="text-blue">TC Devices</span> - <span class="text-yellow">Control</span></h1>
+    <h1><span class="text-blue">TC Devices</span> - <span class="text-yellow">Control Panel</span></h1>
 </header>
 
 <div class="table-container">
     <table>
         <thead>
             <tr>
+                <th>TC Slot</th>
                 <th>Associate Name</th>
-                <th>TC Number</th>
                 <th>Check-Out (Date/Time)</th>
                 <th>Check-In (Return Status)</th>
             </tr>
         </thead>
         <tbody id="deviceTableBody">
-            <tr>
-                <td colspan="4" style="text-align:center; color:#888;">Loading tracking logs...</td>
-            </tr>
+            <!-- As 10 linhas fixas serão geradas aqui via JavaScript -->
         </tbody>
     </table>
 </div>
@@ -72,38 +71,65 @@
         return d.toLocaleDateString('en-US', {month: '2-digit', day: '2-digit'}) + " " + d.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit', hour12: true});
     }
 
-    // Monitora a coleção de dispositivos ordenando pelos registros mais recentes de saída
-    const q = query(collection(db, "devices"), orderBy("checkoutTime", "desc"));
+    // Escuta os dados do Firebase em tempo real
+    const q = query(collection(db, "devices"), orderBy("checkoutTime", "asc"));
     onSnapshot(q, (snapshot) => {
-        tableBody.innerHTML = "";
         
-        if (snapshot.empty) {
-            tableBody.innerHTML = "<tr><td colspan='4' style='text-align:center; color:#aaa;'>No devices registered today.</td></tr>";
-            return;
+        // 1. Cria uma estrutura de dados vazia para os 10 TCs
+        const tcSlots = {};
+        for (let i = 1; i <= 10; i++) {
+            tcSlots[i] = {
+                associate: "--",
+                checkoutTime: null,
+                checkinTime: null,
+                returnAssociate: null,
+                isActive: false
+            };
         }
 
+        // 2. Preenche os slots com o registro mais recente de cada TC encontrado no Firebase
         snapshot.forEach((doc) => {
             const data = doc.data();
+            const num = parseInt(data.tcNumber);
+            
+            // Se o número do TC estiver entre 1 e 10, joga as informações pro slot dele
+            if (num >= 1 && num <= 10) {
+                tcSlots[num] = {
+                    associate: data.associate,
+                    checkoutTime: data.checkoutTime,
+                    checkinTime: data.checkinTime,
+                    returnAssociate: data.returnAssociate,
+                    isActive: true
+                };
+            }
+        });
+
+        // 3. Renderiza fisicamente as 10 linhas fixas na tela com os dados atualizados
+        tableBody.innerHTML = "";
+        for (let i = 1; i <= 10; i++) {
+            const slot = tcSlots[i];
             const tr = document.createElement('tr');
 
-            // Formata as datas de saída e retorno de forma limpa
-            const outTime = formatFirebaseDate(data.checkoutTime);
+            let outTime = formatFirebaseDate(slot.checkoutTime);
             let inStatus = "";
 
-            if (data.checkinTime) {
-                inStatus = `<span class="status-returned">Returned at: ${formatFirebaseDate(data.checkinTime)}</span>`;
+            if (!slot.isActive) {
+                inStatus = `<span class="status-available">Available in Locker</span>`;
+            } else if (slot.checkinTime) {
+                const returnUser = slot.returnAssociate ? ` by ${slot.returnAssociate}` : "";
+                inStatus = `<span class="status-returned">Returned${returnUser} at: ${formatFirebaseDate(slot.checkinTime)}</span>`;
             } else {
                 inStatus = `<span class="status-pending">Out with Associate</span>`;
             }
 
             tr.innerHTML = `
-                <td><strong>${data.associate}</strong></td>
-                <td>TC #${data.tcNumber}</td>
+                <td><strong>TC #0${i}</strong></td>
+                <td><span style="${slot.associate !== '--' ? 'font-weight: bold; color: #ffc220;' : 'color: #888;'}">${slot.associate}</span></td>
                 <td>${outTime}</td>
                 <td>${inStatus}</td>
             `;
             tableBody.appendChild(tr);
-        });
+        }
     });
 </script>
 </body>
