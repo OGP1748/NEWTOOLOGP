@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OGP Control - Device Check-Out</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #1a1a1a; color: white; padding: 20px; text-align: center; margin: 0; }
+        .box { background-color: #333; padding: 25px; border-radius: 10px; max-width: 450px; margin: 30px auto; box-shadow: 0 4px 15px rgba(0,0,0,0.5); box-sizing: border-box; }
+        h1 { color: #e74c3c; margin-bottom: 20px; font-size: 1.8rem; text-transform: uppercase; font-family: 'Arial Black', sans-serif; }
+        label { display: block; text-align: left; font-weight: bold; margin-top: 15px; color: #aaa; text-transform: uppercase; font-size: 0.9rem; }
+        input { font-size: 1.2rem; width: 100%; padding: 12px; border-radius: 6px; border: 2px solid #e74c3c; background: #222; color: white; font-weight: bold; box-sizing: border-box; margin-top: 5px; }
+        input:focus { border-color: #ffc220; outline: none; }
+        button { display: block; width: 100%; margin-top: 25px; background-color: #e74c3c; color: white; font-size: 1.3rem; font-weight: bold; padding: 15px; border: none; border-radius: 6px; cursor: pointer; transition: 0.2s; text-transform: uppercase; }
+        button:hover { background-color: #c0392b; }
+        .status { margin-top: 15px; font-size: 1rem; color: #2ecc71; display: none; font-weight: bold; }
+        .btn-back { display: inline-block; margin-top: 20px; color: #aaa; text-decoration: none; }
+        .btn-back:hover { color: white; }
+    </style>
+</head>
+<body>
+<div class="box">
+    <h1>Device Check-Out</h1>
+    
+    <label for="associateInput">Associate Name:</label>
+    <input type="text" id="associateInput" placeholder="Enter Full Name">
+    
+    <label for="tcInput">TC Number / Device ID:</label>
+    <input type="number" id="tcInput" placeholder="Ex: 45" min="1">
+    
+    <button id="checkoutBtn">Confirm Check-Out</button>
+    <div class="status" id="statusMsg">✔ Check-Out Registered Successfully!</div>
+    <br>
+    <a href="RegisterDevice.html" class="btn-back">⬅ Cancel and Go Back</a>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyAs7X8zV_v8N21x8vV_ExampleKeyOnly", 
+        authDomain: "walmart-ogp-code-screen.firebaseapp.com",
+        projectId: "walmart-ogp-code-screen",
+        storageBucket: "walmart-ogp-code-screen.appspot.com",
+        messagingSenderId: "123456789012",
+        appId: "1:123456789012:web:a1b2c3d4e5f6g7h8i9j0k"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    document.getElementById('checkoutBtn').addEventListener('click', async () => {
+        const associateField = document.getElementById('associateInput');
+        const tcField = document.getElementById('tcInput');
+        
+        const associateValue = associateField.value.trim();
+        const tcValue = tcField.value.trim();
+
+        if (!associateValue || !tcValue) return alert("Please fill in all fields.");
+
+        try {
+            // Cria um novo registro pendente de devolução
+            await addDoc(collection(db, "devices"), {
+                associate: associateValue,
+                tcNumber: parseInt(tcValue),
+                checkoutTime: serverTimestamp(),
+                checkinTime: null // Fica nulo até ser devolvido
+            });
+
+            associateField.value = "";
+            tcField.value = "";
+            
+            const msg = document.getElementById('statusMsg');
+            msg.style.display = 'block';
+            setTimeout(() => { msg.style.display = 'none'; }, 2500);
+        } catch (e) {
+            alert("Error registering check-out: " + e.message);
+        }
+    });
+</script>
+</body>
+</html>
