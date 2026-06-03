@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OGP Control - Device Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #1a1a1a; color: white; margin: 0; padding: 20px; box-sizing: border-box; }
+        header { display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid #0071dc; padding-bottom: 10px; margin-bottom: 20px; }
+        header h1 { margin: 0; font-size: 2.2rem; text-transform: uppercase; font-family: 'Arial Black', sans-serif; }
+        .text-blue { color: #0071dc; }
+        .text-yellow { color: #ffc220; }
+        
+        .table-container { background-color: #333; padding: 15px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th { background-color: #0071dc; color: white; font-weight: bold; padding: 12px; text-transform: uppercase; font-size: 0.9rem; }
+        td { padding: 12px; border-bottom: 1px solid #444; font-size: 1.1rem; }
+        tr:hover { background-color: #3a3a3a; }
+        
+        .status-pending { color: #e74c3c; font-weight: bold; text-transform: uppercase; font-size: 0.9rem; background: rgba(231,76,60,0.15); padding: 5px 10px; border-radius: 4px; display: inline-block; }
+        .status-returned { color: #2ecc71; font-weight: bold; font-size: 1rem; }
+        
+        .btn-back { display: inline-block; margin-top: 25px; color: #aaa; text-decoration: none; font-weight: bold; }
+        .btn-back:hover { color: white; }
+    </style>
+</head>
+<body>
+<header>
+    <h1><span class="text-blue">TC Devices</span> - <span class="text-yellow">Control</span></h1>
+</header>
+
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>Associate Name</th>
+                <th>TC Number</th>
+                <th>Check-Out (Date/Time)</th>
+                <th>Check-In (Return Status)</th>
+            </tr>
+        </thead>
+        <tbody id="deviceTableBody">
+            <tr>
+                <td colspan="4" style="text-align:center; color:#888;">Loading tracking logs...</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<a href="ControlEq.html" class="btn-back">⬅ Back to Equipment Menu</a>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyAs7X8zV_v8N21x8vV_ExampleKeyOnly", 
+        authDomain: "walmart-ogp-code-screen.firebaseapp.com",
+        projectId: "walmart-ogp-code-screen",
+        storageBucket: "walmart-ogp-code-screen.appspot.com",
+        messagingSenderId: "123456789012",
+        appId: "1:123456789012:web:a1b2c3d4e5f6g7h8i9j0k"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const tableBody = document.getElementById('deviceTableBody');
+
+    function formatFirebaseDate(timestamp) {
+        if (!timestamp) return "--";
+        const d = timestamp.toDate();
+        return d.toLocaleDateString('en-US', {month: '2-digit', day: '2-digit'}) + " " + d.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit', hour12: true});
+    }
+
+    // Monitora a coleção de dispositivos ordenando pelos registros mais recentes de saída
+    const q = query(collection(db, "devices"), orderBy("checkoutTime", "desc"));
+    onSnapshot(q, (snapshot) => {
+        tableBody.innerHTML = "";
+        
+        if (snapshot.empty) {
+            tableBody.innerHTML = "<tr><td colspan='4' style='text-align:center; color:#aaa;'>No devices registered today.</td></tr>";
+            return;
+        }
+
+        snapshot.forEach((doc) => {
+            const data = doc.data();
+            const tr = document.createElement('tr');
+
+            // Formata as datas de saída e retorno de forma limpa
+            const outTime = formatFirebaseDate(data.checkoutTime);
+            let inStatus = "";
+
+            if (data.checkinTime) {
+                inStatus = `<span class="status-returned">Returned at: ${formatFirebaseDate(data.checkinTime)}</span>`;
+            } else {
+                inStatus = `<span class="status-pending">Out with Associate</span>`;
+            }
+
+            tr.innerHTML = `
+                <td><strong>${data.associate}</strong></td>
+                <td>TC #${data.tcNumber}</td>
+                <td>${outTime}</td>
+                <td>${inStatus}</td>
+            `;
+            tableBody.appendChild(tr);
+        });
+    });
+</script>
+</body>
+</html>
