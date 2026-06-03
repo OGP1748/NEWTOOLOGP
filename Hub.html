@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Walmart OGP - Main Hub</title>
+    <style>
+        body { font-family: 'Arial Black', sans-serif; background-color: #1a1a1a; color: white; margin: 0; padding: 0; display: flex; flex-direction: column; min-height: 100vh; box-sizing: border-box; }
+        header { background-color: #1a1a1a; text-align: center; padding: 30px 20px; border-bottom: 4px solid #0071dc; }
+        header h1 { margin: 0; font-size: 2.5rem; text-transform: uppercase; }
+        .text-blue { color: #0071dc; }
+        .text-yellow { color: #ffc220; }
+        .container { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 40px 20px; gap: 20px; max-width: 500px; margin: 0 auto; width: 100%; box-sizing: border-box; }
+        h2 { font-size: 1.8rem; margin: 0; text-align: center; color: #fff; }
+        .p-desc { font-family: Arial, sans-serif; color: #aaa; margin: 0 0 15px 0; font-size: 1.2rem; text-align: center; }
+        .hub-btn { display: flex; align-items: center; justify-content: center; width: 100%; padding: 30px 25px; font-size: 1.6rem; font-weight: bold; text-transform: uppercase; text-decoration: none; border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,0.6); transition: transform 0.2s, box-shadow 0.2s; box-sizing: border-box; text-align: center; }
+        .hub-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,0.8); }
+        .btn-dispensing { background-color: #0071dc; color: white; border: 3px solid #0056a8; }
+        .btn-equipment { background-color: #333; color: #ffc220; border: 3px solid #ffc220; }
+    </style>
+</head>
+<body>
+<header>
+    <h1><span class="text-blue">Walmart</span> - <span class="text-yellow">OGP Portal</span></h1>
+</header>
+<div class="container">
+    <h2>Hello, Associate!</h2>
+    <p class="p-desc">Select the tool you want to access:</p>
+    <a href="DispensingHub.html" class="hub-btn btn-dispensing">🚀 Dispensing Tools</a>
+    <a href="ControlEq.html" class="hub-btn btn-equipment">🛠️ Equipment Control</a>
+</div>
+</body>
+</html>
