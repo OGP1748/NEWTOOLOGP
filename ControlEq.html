@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OGP Portal - Equipment Control</title>
+    <style>
+        body { font-family: 'Arial Black', sans-serif; background-color: #1a1a1a; color: white; margin: 0; padding: 0; display: flex; flex-direction: column; min-height: 100vh; box-sizing: border-box; }
+        header { background-color: #1a1a1a; text-align: center; padding: 25px 20px; border-bottom: 4px solid #0071dc; }
+        header h1 { margin: 0; font-size: 2rem; text-transform: uppercase; }
+        .text-blue { color: #0071dc; }
+        .text-yellow { color: #ffc220; }
+        .container { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 30px 20px; gap: 20px; max-width: 500px; margin: 0 auto; width: 100%; box-sizing: border-box; }
+        .p-desc { font-family: Arial, sans-serif; color: #aaa; margin: 0 0 10px 0; font-size: 1.1rem; text-align: center; }
+        .hub-btn { display: flex; align-items: center; justify-content: center; width: 100%; padding: 25px; font-size: 1.4rem; font-weight: bold; text-transform: uppercase; text-decoration: none; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); transition: transform 0.2s, box-shadow 0.2s; box-sizing: border-box; text-align: center; }
+        .hub-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.7); }
+        .btn-register { background-color: #ffc220; color: #333; border: 3px solid #e5af1d; }
+        .btn-dashboard { background-color: #333; color: #ffc220; border: 3px solid #ffc220; }
+        .btn-back { font-family: Arial, sans-serif; color: #aaa; text-decoration: none; margin-top: 15px; font-size: 1rem; transition: color 0.2s; }
+        .btn-back:hover { color: white; }
+    </style>
+</head>
+<body>
+<header>
+    <h1><span class="text-blue">Equipment</span> - <span class="text-yellow">Control Menu</span></h1>
+</header>
+<div class="container">
+    <p class="p-desc">Select the equipment action you need:</p>
+
+    <!-- Botão para Registrar Equipamento (TCs, Impressoras, etc.) -->
+    <a href="RegisterDevice.html" class="hub-btn btn-register">📝 Register Device</a>
+
+    <!-- Botão para ver o Painel de Controle dos equipamentos -->
+    <a href="DeviceDashboard.html" class="hub-btn btn-dashboard">📊 Device Dashboard</a>
+
+    <!-- Volta para o Hub.html com a primeira letra maiúscula para não dar erro -->
+    <a href="Hub.html" class="btn-back">⬅ Back to Main Hub</a>
+</div>
+</body>
+</html>
