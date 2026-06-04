@@ -79,22 +79,23 @@
     const db = getFirestore(app);
     const painelPedidos = document.getElementById('painelPedidos');
     let firstLoad = true; 
+    let audioCtx = null;
     let lastWaitTime = null;
     const wtValueSpan = document.getElementById('wtValue');
     const footerContainer = document.getElementById('footerContainer');
 
-    // Bip de notificação padrão rápido
-    const notificationSound = new Audio("https://actions.google.com/sounds/v1/notifications/chic.ogg");
+    // Link direto para o áudio estilo aeroporto/trem de 3 notas (pindondon) legítimo e limpo
+    const airportChime = new Audio("https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg"); // Fallback seguro
+    const realAirportSound = new Audio("https://audio-previews.elements.static.webmfiles.com/files/audio_preview/e/b/6/eb6dfbdf-32ef-46be-a7f4-8a436531948d.mp3?filename=airport-chime-sound-effect.mp3");
+    
+    // Som curto de clique para o wait time
+    const waitTimeAudio = new Audio("https://actions.google.com/sounds/v1/notifications/chic.ogg");
 
-    // Nova função mágica que busca a voz gerada diretamente na internet externa
-    function speakWithExternalAPI(text) {
-        const encodedText = encodeURIComponent(text);
-        // Usa o tradutor do Google traduzindo para o Inglês dos EUA (tl=en)
-        const voiceUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=en&client=tw-ob&q=${encodedText}`;
-        
-        const speechAudio = new Audio(voiceUrl);
-        speechAudio.play().catch(e => console.log("Erro ao reproduzir voz externa:", e));
+    function activateAudioContext() {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
     }
+    document.body.addEventListener('click', activateAudioContext, { once: false });
 
     onSnapshot(doc(db, "settings", "waittime"), (docSnap) => {
         if (docSnap.exists()) {
@@ -105,24 +106,44 @@
             else footerContainer.className = 'status-red';
 
             if (!firstLoad && lastWaitTime !== null && lastWaitTime !== time) {
-                notificationSound.play().catch(e => console.log(e));
-                setTimeout(() => { 
-                    let msg = `Wait time is now ${time.toFixed(1)} minutes.`;
-                    speakWithExternalAPI(msg);
-                }, 500);
+                waitTimeAudio.play().catch(e => console.log(e));
+                setTimeout(() => { speakWaitTimeUpdate(time); }, 400);
             }
             lastWaitTime = time;
         }
     });
 
     document.getElementById('unmuteBtn').addEventListener('click', function() {
-        // Toca o bip e uma fala de teste rápida para dar o "parper" de som na TV Amazon
-        notificationSound.play().then(() => { notificationSound.pause(); notificationSound.currentTime = 0; });
-        speakWithExternalAPI("Audio system is active");
+        activateAudioContext();
+        // Pré-carrega e roda um teste do som de aeroporto no clique
+        realAirportSound.play().catch(() => airportChime.play());
+        
+        if ('speechSynthesis' in window) {
+            const utterance = new SpeechSynthesisUtterance('');
+            window.speechSynthesis.speak(utterance);
+        }
         
         this.textContent = "✅ Audio Active";
         this.classList.add('activated');
     });
+
+    function speakWaitTimeUpdate(time) {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            let msg = time < 5 ? `Wait time ${time.toFixed(1)}. Congratulations team.` : `Wait time ${time.toFixed(1)}. Let's improve!`;
+            const utterance = new SpeechSynthesisUtterance(msg);
+            utterance.lang = 'en-US'; utterance.rate = 0.8; window.speechSynthesis.speak(utterance);
+        }
+    }
+
+    function speakOrder(bay, code) {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            const spacedCode = code.split('').join(' ');
+            const utterance = new SpeechSynthesisUtterance(`Bay ${bay}. Code ${spacedCode}`);
+            utterance.lang = 'en-US'; utterance.rate = 0.75; window.speechSynthesis.speak(utterance);
+        }
+    }
 
     async function deleteOldOrdersForBay(bayNumber, currentDocId) {
         try {
@@ -142,15 +163,13 @@
                     const newOrder = change.doc.data();
                     deleteOldOrdersForBay(newOrder.bay, change.doc.id);
                     
-                    // Toca o BIP primeiro
-                    notificationSound.play().catch(e => console.log(e));
+                    // 1. Toca o som de aeroporto (Pindondon) que para sozinho
+                    realAirportSound.play().catch(() => airportChime.play());
                     
-                    // Fala o código soletrado logo em seguida
+                    // 2. Aguarda 1.8 segundos (tempo do som acabar) e faz o robô ler o texto normal
                     setTimeout(() => { 
-                        const spacedCode = newOrder.code.split('').join(' ');
-                        const orderText = `Bay ${newOrder.bay}. Code ${spacedCode}`;
-                        speakWithExternalAPI(orderText);
-                    }, 500); 
+                        speakOrder(newOrder.bay, newOrder.code); 
+                    }, 1800); 
                 }
             });
         }
