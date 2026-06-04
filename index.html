@@ -3,47 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OGP - Send Dispensing Code</title>
+    <title>OGP Dashboard - Active Orders</title>
     <style>
-        /* Fundo alterado para branco com texto escuro para máxima visibilidade */
-        body { font-family: Arial, sans-serif; background-color: #ffffff; color: #333333; padding: 20px; text-align: center; margin: 0; }
+        body { font-family: 'Arial Black', sans-serif; background-color: #1a1a1a; color: white; margin: 0; padding: 20px; box-sizing: border-box; padding-bottom: 90px; }
+        header { display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid #0071dc; padding-bottom: 10px; margin-bottom: 20px; }
+        header h1 { margin: 0; font-size: 2.5rem; text-transform: uppercase; }
+        .text-blue { color: #0071dc; }
+        .text-yellow { color: #ffc220; }
+        .header-controls { display: flex; align-items: center; gap: 10px; }
+        .grid-pedidos { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; }
+        .card-pedido { background-color: #333; border-left: 15px solid #ffc220; padding: 20px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        .bay-num { font-size: 2.5rem; color: #fff; }
+        .code-num { font-size: 2.5rem; color: #ffc220; }
+        .btn-limpar { background: #ff4d4d; color: white; border: none; padding: 10px 20px; font-weight: bold; border-radius: 5px; cursor: pointer; font-family: Arial, sans-serif; }
         
-        /* Caixa de envio ajustada com fundo cinza bem claro e bordas suaves */
-        .box { background-color: #f8f9fa; padding: 25px; border-radius: 10px; max-width: 400px; margin: 30px auto; box-shadow: 0 4px 15px rgba(0,0,0,0.1); box-sizing: border-box; border: 1px solid #e0e0e0; }
-        
-        /* Título em azul Walmart para destacar bem no fundo claro */
-        h1 { color: #0071dc; margin-bottom: 20px; font-size: 1.8rem; text-transform: uppercase; font-weight: bold; }
-        
-        label { display: block; text-align: left; font-weight: bold; margin-top: 15px; color: #555555; text-transform: uppercase; font-size: 0.9rem; }
-        
-        /* Inputs ajustados com fundo branco, texto escuro e borda azul */
-        input { font-size: 1.5rem; width: 100%; padding: 12px; border-radius: 6px; border: 2px solid #0071dc; background: #ffffff; color: #222222; font-weight: bold; box-sizing: border-box; margin-top: 5px; }
-        input:focus { border-color: #ffc220; outline: none; box-shadow: 0 0 5px rgba(255, 194, 32, 0.5); }
-        
-        button { display: block; width: 100%; margin-top: 25px; background-color: #0071dc; color: white; font-size: 1.3rem; font-weight: bold; padding: 15px; border: none; border-radius: 6px; cursor: pointer; transition: 0.2s; text-transform: uppercase; }
-        button:hover { background-color: #0056a8; }
-        
-        /* Status de sucesso em verde forte para contrastar bem */
-        .status { margin-top: 15px; font-size: 1.1rem; color: #27ae60; display: none; font-weight: bold; }
+        .btn-unmute {
+            background-color: #ffc220;
+            color: #333;
+            font-family: Arial, sans-serif;
+            font-size: 0.9rem;
+            font-weight: bold;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-unmute.activated {
+            background-color: #2ecc71;
+            color: white;
+        }
+
+        footer { position: fixed; bottom: 0; left: 0; width: 100%; background-color: #1a1a1a; padding: 20px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; }
+        .wait-time-container { display: flex; align-items: center; width: 100%; justify-content: center; }
+        .wt-line { flex-grow: 1; height: 6px; border: none; margin: 0 20px; }
+        .footer-wait-time { font-size: 1.8rem; font-weight: bold; text-transform: uppercase; white-space: nowrap; letter-spacing: 1px; }
+        .status-green { color: #2ecc71; }
+        .status-green .wt-line { background-color: #2ecc71; }
+        .status-yellow { color: #ffc220; }
+        .status-yellow .wt-line { background-color: #ffc220; }
+        .status-red { color: #e74c3c; }
+        .status-red .wt-line { background-color: #e74c3c; }
     </style>
 </head>
 <body>
-<div class="box">
-    <h1>OGP - Send Code</h1>
-    
-    <label for="bayInput">Bay Number:</label>
-    <input type="number" id="bayInput" placeholder="Ex: 1" min="1">
-    
-    <label for="codeInput">4-Digit Code:</label>
-    <input type="text" id="codeInput" placeholder="Ex: 1234" maxlength="4" inputmode="numeric">
-    
-    <button id="sendBtn">Send to TV Screen</button>
-    <div class="status" id="statusMsg">✔ Sent successfully!</div>
-</div>
-
+<header>
+    <h1><span class="text-blue">Walmart</span> - <span class="text-yellow">Dispensing Codes</span></h1>
+    <div class="header-controls">
+        <button class="btn-limpar" id="clearBtn">Clear Screen</button>
+        <button id="unmuteBtn" class="btn-unmute">🔊 Unmute Audio</button>
+    </div>
+</header>
+<div class="grid-pedidos" id="painelPedidos"></div>
+<footer id="footerContainer">
+    <div class="wait-time-container">
+        <div class="wt-line"></div>
+        <div class="footer-wait-time">Wait Time: <span id="wtValue">--</span> mins</div>
+        <div class="wt-line"></div>
+    </div>
+</footer>
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, query, orderBy, onSnapshot, getDocs, deleteDoc, doc, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyAs7X8zV_v8N21x8vV_ExampleKeyOnly", 
@@ -56,32 +77,120 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const painelPedidos = document.getElementById('painelPedidos');
+    let firstLoad = true; 
+    let audioCtx = null;
+    let lastWaitTime = null;
+    const wtValueSpan = document.getElementById('wtValue');
+    const footerContainer = document.getElementById('footerContainer');
 
-    document.getElementById('sendBtn').addEventListener('click', async () => {
-        const bayField = document.getElementById('bayInput');
-        const codeField = document.getElementById('codeInput');
+    // LINK PERMANENTE E SEGURO: Som clássico de aviso de aeroporto/estação de 3 notas (pindondon)
+    const realAirportSound = new Audio("https://upload.wikimedia.org/wikipedia/commons/2/2a/Chime_SNCF_1993.ogg");
+    
+    // Som curto para a mudança de wait time
+    const waitTimeAudio = new Audio("https://actions.google.com/sounds/v1/notifications/chic.ogg");
+
+    function activateAudioContext() {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+    }
+    document.body.addEventListener('click', activateAudioContext, { once: false });
+
+    onSnapshot(doc(db, "settings", "waittime"), (docSnap) => {
+        if (docSnap.exists()) {
+            const time = docSnap.data().minutes;
+            wtValueSpan.innerText = time.toFixed(1);
+            if (time < 5) footerContainer.className = 'status-green';
+            else if (time === 5) footerContainer.className = 'status-yellow';
+            else footerContainer.className = 'status-red';
+
+            if (!firstLoad && lastWaitTime !== null && lastWaitTime !== time) {
+                waitTimeAudio.play().catch(e => console.log(e));
+                setTimeout(() => { speakWaitTimeUpdate(time); }, 400);
+            }
+            lastWaitTime = time;
+        }
+    });
+
+    document.getElementById('unmuteBtn').addEventListener('click', function() {
+        activateAudioContext();
         
-        const bayValue = bayField.value.trim();
-        const codeValue = codeField.value.trim();
+        // Força a TV a carregar e tocar o pindondon no clique do botão amarelo
+        realAirportSound.play().catch(e => console.log(e));
+        
+        if ('speechSynthesis' in window) {
+            const utterance = new SpeechSynthesisUtterance('');
+            window.speechSynthesis.speak(utterance);
+        }
+        
+        this.textContent = "✅ Audio Active";
+        this.classList.add('activated');
+    });
 
-        if (!bayValue || !codeValue) return alert("Please fill in both fields.");
-        if (codeValue.length !== 4) return alert("The code must be exactly 4 digits.");
+    function speakWaitTimeUpdate(time) {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            let msg = time < 5 ? `Wait time ${time.toFixed(1)}. Congratulations team.` : `Wait time ${time.toFixed(1)}. Let's improve!`;
+            const utterance = new SpeechSynthesisUtterance(msg);
+            utterance.lang = 'en-US'; utterance.rate = 0.8; window.speechSynthesis.speak(utterance);
+        }
+    }
 
+    function speakOrder(bay, code) {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            const spacedCode = code.split('').join(' ');
+            const utterance = new SpeechSynthesisUtterance(`Bay ${bay}. Code ${spacedCode}`);
+            utterance.lang = 'en-US'; utterance.rate = 0.75; window.speechSynthesis.speak(utterance);
+        }
+    }
+
+    async function deleteOldOrdersForBay(bayNumber, currentDocId) {
         try {
-            await addDoc(collection(db, "orders"), {
-                bay: parseInt(bayValue),
-                code: codeValue,
-                timestamp: serverTimestamp()
+            const qDocs = query(collection(db, "orders"), where("bay", "==", bayNumber));
+            const querySnapshot = await getDocs(qDocs);
+            querySnapshot.forEach(async (documento) => {
+                if (documento.id !== currentDocId) await deleteDoc(doc(db, "orders", documento.id));
             });
+        } catch (e) {}
+    }
 
-            bayField.value = "";
-            codeField.value = "";
-            
-            const msg = document.getElementById('statusMsg');
-            msg.style.display = 'block';
-            setTimeout(() => { msg.style.display = 'none'; }, 2500);
-        } catch (e) {
-            alert("Error sending: " + e.message);
+    const q = query(collection(db, "orders"), orderBy("timestamp", "desc"));
+    onSnapshot(q, (snapshot) => {
+        if (!firstLoad && snapshot.docChanges().length > 0) {
+            snapshot.docChanges().forEach((change) => {
+                if (change.type === "added") {
+                    const newOrder = change.doc.data();
+                    deleteOldOrdersForBay(newOrder.bay, change.doc.id);
+                    
+                    // Toca o Pindondon seguro da Wikimedia
+                    realAirportSound.play().catch(e => console.log(e));
+                    
+                    // Espera o som terminar antes de tentar soltar a fala (nos aparelhos compatíveis)
+                    setTimeout(() => { 
+                        speakOrder(newOrder.bay, newOrder.code); 
+                    }, 2500); 
+                }
+            });
+        }
+        if (firstLoad) firstLoad = false;
+        painelPedidos.innerHTML = "";
+        if (snapshot.empty) {
+            painelPedidos.innerHTML = "<h2 style='color:#666; width:100%; text-align:center;'>No cars in bays currently.</h2>";
+            return;
+        }
+        snapshot.forEach((doc) => {
+            const data = doc.data();
+            const card = document.createElement('div'); card.className = 'card-pedido';
+            card.innerHTML = `<div class="bay-num">BAY ${data.bay}</div><div class="code-num">#${data.code}</div>`;
+            painelPedidos.appendChild(card);
+        });
+    });
+
+    document.getElementById('clearBtn').addEventListener('click', async () => {
+        if(confirm("Do you want to clear all orders from the screen?")) {
+            const querySnapshot = await getDocs(collection(db, "orders"));
+            querySnapshot.forEach((documento) => { deleteDoc(doc(db, "orders", documento.id)); });
         }
     });
 </script>
