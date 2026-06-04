@@ -10,11 +10,31 @@
         header h1 { margin: 0; font-size: 2.5rem; text-transform: uppercase; }
         .text-blue { color: #0071dc; }
         .text-yellow { color: #ffc220; }
+        .header-controls { display: flex; align-items: center; gap: 10px; }
         .grid-pedidos { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; }
         .card-pedido { background-color: #333; border-left: 15px solid #ffc220; padding: 20px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
         .bay-num { font-size: 2.5rem; color: #fff; }
         .code-num { font-size: 2.5rem; color: #ffc220; }
         .btn-limpar { background: #ff4d4d; color: white; border: none; padding: 10px 20px; font-weight: bold; border-radius: 5px; cursor: pointer; font-family: Arial, sans-serif; }
+        
+        /* Estilos do novo botão Unmute */
+        .btn-unmute {
+            background-color: #ffc220;
+            color: #333;
+            font-family: Arial, sans-serif;
+            font-size: 0.9rem;
+            font-weight: bold;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-unmute.activated {
+            background-color: #2ecc71;
+            color: white;
+        }
+
         footer { position: fixed; bottom: 0; left: 0; width: 100%; background-color: #1a1a1a; padding: 20px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; }
         .wait-time-container { display: flex; align-items: center; width: 100%; justify-content: center; }
         .wt-line { flex-grow: 1; height: 6px; border: none; margin: 0 20px; }
@@ -30,7 +50,10 @@
 <body>
 <header>
     <h1><span class="text-blue">Walmart</span> - <span class="text-yellow">Dispensing Codes</span></h1>
-    <button class="btn-limpar" id="clearBtn">Clear Screen</button>
+    <div class="header-controls">
+        <button class="btn-limpar" id="clearBtn">Clear Screen</button>
+        <button id="unmuteBtn" class="btn-unmute">🔊 Unmute Audio</button>
+    </div>
 </header>
 <div class="grid-pedidos" id="painelPedidos"></div>
 <footer id="footerContainer">
@@ -83,6 +106,17 @@
         if (audioCtx.state === 'suspended') audioCtx.resume();
     }
     document.body.addEventListener('click', activateAudioContext, { once: false });
+
+    // Mágica para destravar o som da TV pelo clique do botão
+    document.getElementById('unmuteBtn').addEventListener('click', function() {
+        activateAudioContext();
+        if ('speechSynthesis' in window) {
+            const utterance = new SpeechSynthesisUtterance('');
+            window.speechSynthesis.speak(utterance);
+        }
+        this.textContent = "✅ Audio Active";
+        this.classList.add('activated');
+    });
 
     function playWaitTimeSound() {
         try {
