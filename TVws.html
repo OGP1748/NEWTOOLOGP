@@ -84,8 +84,7 @@
     const wtValueSpan = document.getElementById('wtValue');
     const footerContainer = document.getElementById('footerContainer');
 
-    // Link direto para o áudio estilo aeroporto/trem de 3 notas (pindondon) legítimo e limpo
-    const airportChime = new Audio("https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg"); // Fallback seguro
+    // Som limpo de aeroporto (pindondon) - Carrega direto do repositório estático estável
     const realAirportSound = new Audio("https://audio-previews.elements.static.webmfiles.com/files/audio_preview/e/b/6/eb6dfbdf-32ef-46be-a7f4-8a436531948d.mp3?filename=airport-chime-sound-effect.mp3");
     
     // Som curto de clique para o wait time
@@ -115,8 +114,8 @@
 
     document.getElementById('unmuteBtn').addEventListener('click', function() {
         activateAudioContext();
-        // Pré-carrega e roda um teste do som de aeroporto no clique
-        realAirportSound.play().catch(() => airportChime.play());
+        // Dispara o pindondon no clique para destravar
+        realAirportSound.play().catch(e => console.log(e));
         
         if ('speechSynthesis' in window) {
             const utterance = new SpeechSynthesisUtterance('');
@@ -163,10 +162,10 @@
                     const newOrder = change.doc.data();
                     deleteOldOrdersForBay(newOrder.bay, change.doc.id);
                     
-                    // 1. Toca o som de aeroporto (Pindondon) que para sozinho
-                    realAirportSound.play().catch(() => airportChime.play());
+                    // Toca o Pindondon e para
+                    realAirportSound.play().catch(e => console.log(e));
                     
-                    // 2. Aguarda 1.8 segundos (tempo do som acabar) e faz o robô ler o texto normal
+                    // Espera o efeito sonoro terminar antes de ler
                     setTimeout(() => { 
                         speakOrder(newOrder.bay, newOrder.code); 
                     }, 1800); 
