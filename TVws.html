@@ -17,7 +17,7 @@
         .code-num { font-size: 2.5rem; color: #ffc220; }
         .btn-limpar { background: #ff4d4d; color: white; border: none; padding: 10px 20px; font-weight: bold; border-radius: 5px; cursor: pointer; font-family: Arial, sans-serif; }
         
-        /* Estilos do novo botão Unmute */
+        /* Estilos do botão Unmute */
         .btn-unmute {
             background-color: #ffc220;
             color: #333;
@@ -107,19 +107,30 @@
     }
     document.body.addEventListener('click', activateAudioContext, { once: false });
 
-    // Mágica para destravar o som da TV pelo clique do botão
+    // Correção forte para o navegador Amazon Silk destravar o som
     document.getElementById('unmuteBtn').addEventListener('click', function() {
         activateAudioContext();
+        
+        // Força a reprodução de um bip de teste imediatamente para testar o falante da TV
+        playNotificationSound();
+
+        // Acorda o motor de voz forçando parâmetros exigidos pela Amazon
         if ('speechSynthesis' in window) {
-            const utterance = new SpeechSynthesisUtterance('');
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance('Audio activated');
+            utterance.lang = 'en-US';
+            utterance.volume = 1.0;
+            utterance.rate = 0.8;
             window.speechSynthesis.speak(utterance);
         }
+        
         this.textContent = "✅ Audio Active";
         this.classList.add('activated');
     });
 
     function playWaitTimeSound() {
         try {
+            activateAudioContext();
             if (!audioCtx) return;
             const now = audioCtx.currentTime;
             const osc1 = audioCtx.createOscillator(); const gain1 = audioCtx.createGain();
@@ -140,12 +151,13 @@
             let msg = time < 5 ? `Wait time ${time.toFixed(1)}. Congratulations team, let's keep it!` : `Wait time ${time.toFixed(1)}. Let's improve and get under 5!`;
             if (time === 5) msg = `Wait time ${time.toFixed(1)}. Right on the line, let's push it down!`;
             const utterance = new SpeechSynthesisUtterance(msg);
-            utterance.lang = 'en-US'; utterance.rate = 0.8; window.speechSynthesis.speak(utterance);
+            utterance.lang = 'en-US'; utterance.volume = 1.0; utterance.rate = 0.8; window.speechSynthesis.speak(utterance);
         }
     }
 
     function playNotificationSound() {
         try {
+            activateAudioContext();
             if (!audioCtx) return;
             const oscillator = audioCtx.createOscillator(); const gainNode = audioCtx.createGain();
             oscillator.type = 'sine'; oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); 
@@ -159,7 +171,7 @@
             window.speechSynthesis.cancel();
             const spacedCode = code.split('').join(' ');
             const utterance = new SpeechSynthesisUtterance(`Bay ${bay}. Code ${spacedCode}`);
-            utterance.lang = 'en-US'; utterance.rate = 0.75; window.speechSynthesis.speak(utterance);
+            utterance.lang = 'en-US'; utterance.volume = 1.0; utterance.rate = 0.75; window.speechSynthesis.speak(utterance);
         }
     }
 
@@ -176,16 +188,14 @@
     const q = query(collection(db, "orders"), orderBy("timestamp", "desc"));
     onSnapshot(q, (snapshot) => {
         if (!firstLoad && snapshot.docChanges().length > 0) {
-            if (!window.speechSynthesis.speaking) {
-                snapshot.docChanges().forEach((change) => {
-                    if (change.type === "added") {
-                        const newOrder = change.doc.data();
-                        deleteOldOrdersForBay(newOrder.bay, change.doc.id);
-                        playNotificationSound();
-                        setTimeout(() => { speakOrder(newOrder.bay, newOrder.code); }, 450); 
-                    }
-                });
-            }
+            snapshot.docChanges().forEach((change) => {
+                if (change.type === "added") {
+                    const newOrder = change.doc.data();
+                    deleteOldOrdersForBay(newOrder.bay, change.doc.id);
+                    playNotificationSound();
+                    setTimeout(() => { speakOrder(newOrder.bay, newOrder.code); }, 450); 
+                }
+            });
         }
         if (firstLoad) firstLoad = false;
         painelPedidos.innerHTML = "";
