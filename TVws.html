@@ -17,7 +17,6 @@
         .code-num { font-size: 2.5rem; color: #ffc220; }
         .btn-limpar { background: #ff4d4d; color: white; border: none; padding: 10px 20px; font-weight: bold; border-radius: 5px; cursor: pointer; font-family: Arial, sans-serif; }
         
-        /* Estilos do botão Unmute */
         .btn-unmute {
             background-color: #ffc220;
             color: #333;
@@ -80,10 +79,13 @@
     const db = getFirestore(app);
     const painelPedidos = document.getElementById('painelPedidos');
     let firstLoad = true; 
-    let audioCtx = null;
     let lastWaitTime = null;
     const wtValueSpan = document.getElementById('wtValue');
     const footerContainer = document.getElementById('footerContainer');
+
+    // Carrega arquivos de áudio MP3 reais da internet estáveis (Sons de Alerta e Notificação rápidos)
+    const carArrivalAudio = new Audio("https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg");
+    const waitTimeAudio = new Audio("https://actions.google.com/sounds/v1/notifications/chic.ogg");
 
     onSnapshot(doc(db, "settings", "waittime"), (docSnap) => {
         if (docSnap.exists()) {
@@ -94,86 +96,21 @@
             else footerContainer.className = 'status-red';
 
             if (!firstLoad && lastWaitTime !== null && lastWaitTime !== time) {
-                playWaitTimeSound();
-                setTimeout(() => { speakWaitTimeUpdate(time); }, 400);
+                // Toca o arquivo de som MP3/OGG na mudança do Wait Time
+                waitTimeAudio.play().catch(e => console.log("Erro de áudio:", e));
             }
             lastWaitTime = time;
         }
     });
 
-    function activateAudioContext() {
-        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-    }
-    document.body.addEventListener('click', activateAudioContext, { once: false });
-
-    // Correção forte para o navegador Amazon Silk destravar o som
     document.getElementById('unmuteBtn').addEventListener('click', function() {
-        activateAudioContext();
-        
-        // Força a reprodução de um bip de teste imediatamente para testar o falante da TV
-        playNotificationSound();
-
-        // Acorda o motor de voz forçando parâmetros exigidos pela Amazon
-        if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel();
-            const utterance = new SpeechSynthesisUtterance('Audio activated');
-            utterance.lang = 'en-US';
-            utterance.volume = 1.0;
-            utterance.rate = 0.8;
-            window.speechSynthesis.speak(utterance);
-        }
+        // Toca e pausa os áudios bem rápido no clique para dar permissão total à TV Amazon
+        carArrivalAudio.play().then(() => { carArrivalAudio.pause(); carArrivalAudio.currentTime = 0; });
+        waitTimeAudio.play().then(() => { waitTimeAudio.pause(); waitTimeAudio.currentTime = 0; });
         
         this.textContent = "✅ Audio Active";
         this.classList.add('activated');
     });
-
-    function playWaitTimeSound() {
-        try {
-            activateAudioContext();
-            if (!audioCtx) return;
-            const now = audioCtx.currentTime;
-            const osc1 = audioCtx.createOscillator(); const gain1 = audioCtx.createGain();
-            osc1.type = 'sine'; osc1.frequency.setValueAtTime(523.25, now);
-            gain1.gain.setValueAtTime(0.08, now); gain1.gain.exponentialRampToValueAtTime(0.00001, now + 0.15);
-            osc1.connect(gain1); gain1.connect(audioCtx.destination); osc1.start(now); osc1.stop(now + 0.15);
-
-            const osc2 = audioCtx.createOscillator(); const gain2 = audioCtx.createGain();
-            osc2.type = 'sine'; osc2.frequency.setValueAtTime(659.25, now + 0.1);
-            gain2.gain.setValueAtTime(0.08, now + 0.1); gain2.gain.exponentialRampToValueAtTime(0.00001, now + 0.35);
-            osc2.connect(gain2); gain2.connect(audioCtx.destination); osc2.start(now + 0.1); osc2.stop(now + 0.35);
-        } catch (e) {}
-    }
-
-    function speakWaitTimeUpdate(time) {
-        if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel();
-            let msg = time < 5 ? `Wait time ${time.toFixed(1)}. Congratulations team, let's keep it!` : `Wait time ${time.toFixed(1)}. Let's improve and get under 5!`;
-            if (time === 5) msg = `Wait time ${time.toFixed(1)}. Right on the line, let's push it down!`;
-            const utterance = new SpeechSynthesisUtterance(msg);
-            utterance.lang = 'en-US'; utterance.volume = 1.0; utterance.rate = 0.8; window.speechSynthesis.speak(utterance);
-        }
-    }
-
-    function playNotificationSound() {
-        try {
-            activateAudioContext();
-            if (!audioCtx) return;
-            const oscillator = audioCtx.createOscillator(); const gainNode = audioCtx.createGain();
-            oscillator.type = 'sine'; oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); 
-            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime); gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.4); 
-            oscillator.connect(gainNode); gainNode.connect(audioCtx.destination); oscillator.start(); oscillator.stop(audioCtx.currentTime + 0.4);
-        } catch (e) {}
-    }
-
-    function speakOrder(bay, code) {
-        if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel();
-            const spacedCode = code.split('').join(' ');
-            const utterance = new SpeechSynthesisUtterance(`Bay ${bay}. Code ${spacedCode}`);
-            utterance.lang = 'en-US'; utterance.volume = 1.0; utterance.rate = 0.75; window.speechSynthesis.speak(utterance);
-        }
-    }
 
     async function deleteOldOrdersForBay(bayNumber, currentDocId) {
         try {
@@ -192,8 +129,9 @@
                 if (change.type === "added") {
                     const newOrder = change.doc.data();
                     deleteOldOrdersForBay(newOrder.bay, change.doc.id);
-                    playNotificationSound();
-                    setTimeout(() => { speakOrder(newOrder.bay, newOrder.code); }, 450); 
+                    
+                    // Toca o alarme MP3 contínuo de carro chegando na vaga
+                    carArrivalAudio.play().catch(e => console.log("Erro de áudio:", e));
                 }
             });
         }
